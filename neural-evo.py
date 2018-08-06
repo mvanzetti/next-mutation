@@ -14,8 +14,9 @@ CONFIG = [
     dict(game="MountainCar-v0",
          n_feature=2, n_action=3, continuous_a=[False], ep_max_step=200, eval_threshold=-120),
     dict(game="Pendulum-v0",
-         n_feature=3, n_action=1, continuous_a=[True, 2.], ep_max_step=200, eval_threshold=-180)
-][1]  # choose your game
+         n_feature=3, n_action=1, continuous_a=[True, 2.], ep_max_step=200, eval_threshold=-180),
+
+][3]  # choose your game
 
 
 def sign(k_id): return -1. if k_id % 2 == 0 else 1.  # mirrored sampling
