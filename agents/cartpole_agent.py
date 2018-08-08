@@ -1,7 +1,7 @@
+import argparse
+
 import gym
 import numpy as np
-import argparse
-from joblib import Parallel, delayed
 
 '''
 The Cartpole Agent
@@ -32,7 +32,7 @@ def policy_to_action(env, policy, obs):
 
 
 def run_episode(env, policy, t_max=1000, render=False):
-    print("Policy", policy)
+    # print("Policy", policy)
 
     obs = env.reset()
     total_reward = 0
@@ -45,9 +45,18 @@ def run_episode(env, policy, t_max=1000, render=False):
         total_reward += reward
         if done:
             break
-    print("Total reward", total_reward)
+    # print("Total reward", total_reward)
     return total_reward
 
+def evaluate_policy(env, policy, n):
+    """ Evaluates a policy by running it n times.
+    returns:
+    average total reward
+    """
+    scores = [
+        run_episode(env, policy)
+        for _ in range(n)]
+    return np.mean(scores)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -56,6 +65,9 @@ def main():
 
     parser.add_argument('--timesteps', type=int, default=1000,
                         help='Number of timesteps for each episode')
+
+    parser.add_argument('--num_score_episodes', type=int, default=1000,
+                        help='Number of episodes')
 
     args = parser.parse_args()
     start(args)
@@ -67,10 +79,10 @@ def start(args):
 
     env = gym.make('CartPole-v0')
 
-    print("Episodes:", num_episodes)
-    print("Timesteps per episode:", timesteps)
+    print('Episodes:', num_episodes)
+    print('Timesteps per episode:', timesteps)
 
-    print("Random policy example", gen_random_policy())
+    print('Random policy example', gen_random_policy())
 
     ## Generate a pool or random policies
     n_policy = num_episodes
@@ -80,7 +92,7 @@ def start(args):
     # scores_list = Parallel(n_jobs=10)(delayed(run_episode)(env, p, render=False) for p in policy_list)
     scores_list = [run_episode(env, p, t_max=timesteps, render=False) for p in policy_list]
 
-    print("Scores:", scores_list)
+    print('Scores:', scores_list)
 
     # Select the best policy.
     print('Best policy score = %f' % max(scores_list))
@@ -89,8 +101,12 @@ def start(args):
     print('Running with best policy:\n')
     run_episode(env, best_policy, render=True)
 
-    print("Current average score is", np.mean(scores_list), "over", num_episodes, "episodes")
-    score_rate = np.mean(scores_list) / num_episodes
+    num_score_episodes = args.num_score_episodes
+
+    policy_score = evaluate_policy(env, best_policy, n=num_score_episodes)
+    print('Policy average score = ', policy_score, 'on', num_score_episodes, 'episodes')
+
+    score_rate = policy_score / num_score_episodes
     print("Solved Requirements (average score >= 195 over 100 consecutive trials):")
     print(True if score_rate >= SOLVED_REQ else False)
 

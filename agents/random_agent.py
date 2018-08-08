@@ -1,5 +1,6 @@
-import gym
 import argparse
+
+import gym
 
 
 def main():
@@ -20,7 +21,7 @@ def main():
 # Breakout-v0
 # Atari Actions: 0 (noop), 1 (fire), 2 (left) and 3 (right) are valid actions
 env_to_actions = {
-    'Cartpole-v1': [0, 1],
+    'CartPole-v1': [0, 1],
     'Breakout-v0': [0, 1, 2, 3]
 }
 
@@ -34,14 +35,14 @@ def start(args):
     timesteps = args.timesteps
 
     # env = gym.make('Breakout-v0')
-    env = gym.make('Cartpole-v0')
+    env = gym.make('CartPole-v0')
     for i_episode in range(num_episodes):
         observation = env.reset()
         for t in range(timesteps):
             env.render()
             print(observation)
-            # action = env.action_space.sample()
-            action = stupid_action()
+            action = env.action_space.sample()
+            # action = stupid_action()
             observation, reward, done, info = env.step(action)
             if done:
                 print("Episode finished after {} timesteps".format(t + 1))
