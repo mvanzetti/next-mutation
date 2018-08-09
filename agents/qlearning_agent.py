@@ -10,20 +10,27 @@ import gym
 import numpy as np
 
 n_states = 40
-iter_max = 10000
+num_episodes = 10000
 
 initial_lr = 1.0  # Learning rate
 min_lr = 0.003
 gamma = 1.0
-t_max = 10000
-eps = 0.02
+num_timesteps = 1000
+
+#  TODO epsilon decreasing in time to optimize exploration vs exploitation
+max_eps = 1.0
+min_eps = 0.01
+eps_decay_rate = 0.01
+
+
+# eps = 0.02
 
 
 def run_episode(env, policy=None, render=False):
     obs = env.reset()
     total_reward = 0
     step_idx = 0
-    for _ in range(t_max):
+    for _ in range(num_timesteps):
         if render:
             env.render()
         if policy is None:
@@ -37,8 +44,6 @@ def run_episode(env, policy=None, render=False):
         if done:
             break
     return total_reward
-# min = {float64} -0.4194436284193507
-# max = {float64} 0.0
 
 
 def obs_to_state(env, obs):
@@ -53,36 +58,55 @@ def obs_to_state(env, obs):
 
 if __name__ == '__main__':
     env_name = 'MountainCar-v0'
+    # env_name = 'MountainCar-v0'
+
     env = gym.make(env_name)
     env.seed(0)
     np.random.seed(0)
+
     print('----- using Q Learning -----')
     q_table = np.zeros((n_states, n_states, 3))
-    for i in range(iter_max):
+
+    for episode in range(num_episodes):
         obs = env.reset()
         total_reward = 0
-        ## eta: learning rate is decreased at each step
-        eta = max(min_lr, initial_lr * (0.85 ** (i // 100)))
-        for j in range(t_max):
+
+        # eta: learning rate is decreased at each step
+        eta = max(min_lr, initial_lr * (0.85 ** (episode // 100)))
+
+        # decaying epsilon
+        eps = min_eps + (max_eps - min_eps) * np.exp(-eps_decay_rate * episode)
+        # eps = 0.02
+
+        for timestep in range(num_timesteps):
             a, b = obs_to_state(env, obs)
+            # exploration: takes a random action (epsilon-greedy strategy)
             if np.random.uniform(0, 1) < eps:
-                action = np.random.choice(env.action_space.n)
+                # action = np.random.choice(env.action_space.n)
+                action = env.action_space.sample()
+            # exploitation: takes the biggest Q value for this state
             else:
-                logits = q_table[a][b]
-                logits_exp = np.exp(logits)
-                probs = logits_exp / np.sum(logits_exp)
-                action = np.random.choice(env.action_space.n, p=probs)
+                # logits = q_table[a][b]
+                # logits_exp = np.exp(logits)
+                # probs = logits_exp / np.sum(logits_exp)
+                # action = np.random.choice(env.action_space.n, p=probs)
+
+                action = np.argmax(q_table[a][b])
+
             obs, reward, done, _ = env.step(action)
             total_reward += reward
             # update q table
             a_, b_ = obs_to_state(env, obs)
+
+            # Update Q(s,a):= Q(s,a) + lr [R(s,a) + gamma * max Q(s',a') - Q(s,a)]
             q_table[a][b][action] = q_table[a][b][action] + eta * (
                     reward + gamma * np.max(q_table[a_][b_]) - q_table[a][b][action])
             if done:
                 break
-        if i % 100 == 0:
-            print('Iteration #%d -- Total reward = %d.' % (i + 1, total_reward))
+        if episode % 100 == 0:
+            print('Episode #%d -- Total reward = %d.' % (episode + 1, total_reward))
             print('Eta', eta)
+            print('Epsilon', eps)
     solution_policy = np.argmax(q_table, axis=2)
     solution_policy_scores = [run_episode(env, solution_policy, False) for _ in range(100)]
     print("Average score of solution = ", np.mean(solution_policy_scores))
