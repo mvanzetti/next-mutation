@@ -1,3 +1,4 @@
 .idea/
 explore/.ipynb_checkpoints/
 roms
+doom_agents/_vizdoom.ini

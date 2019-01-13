@@ -1,5 +1,5 @@
 """
-Q-Learning example using OpenAI gym MountainCar enviornment
+Q-Learning example using OpenAI gym MountainCar environment
 
 observation -> [position, velocity]
 action -> [0, 1, 2] = [push left, none, push right]
